@@ -54,15 +54,16 @@ const PostView = (props: PostWithAuthor) => {
             {formatDistanceToNow(new Date(post.createdAt))} ago{" "}
           </span>
         </div>
-        <span>{post.content}</span>
+        <span className="text-1xl">{post.content}</span>
       </div>
     </div>
   );
 };
 
-export default function Home() {
+const Feed = () => {
   const { data, isLoading } = api.post.getAll.useQuery();
-  const { isSignedIn } = useUser();
+
+  if (!data) return <div>Failed to load posts</div>;
 
   if (isLoading) {
     return (
@@ -72,7 +73,28 @@ export default function Home() {
     );
   }
 
-  if (!data) return <div>Failed to load posts</div>;
+  if (!isLoading && data.length === 0) return <div>No posts yet</div>;
+
+  return (
+    <div className="flex flex-col">
+      <Suspense fallback={<LoadingSpinner />}>
+        {[...data, ...data]?.map(({ author, post }) => (
+          <PostView key={post.id} post={post} author={author} />
+        ))}
+      </Suspense>
+    </div>
+  );
+};
+
+export default function Home() {
+  const { isSignedIn, isLoaded: userLoaded } = useUser();
+
+  // We can call this twice here and in Feed because the request is cached
+  // We wanna make sure this fetch is done before rendering the Feed
+  api.post.getAll.useQuery();
+
+  // Return empty div if user is not loaded
+  if (!userLoaded) return <div> Loading User </div>;
 
   return (
     <>
@@ -92,13 +114,7 @@ export default function Home() {
 
             {isSignedIn && <CreatePostWizard />}
           </div>
-          <div className="flex flex-col">
-            <Suspense fallback={<LoadingSpinner />}>
-              {[...data, ...data]?.map(({ author, post }) => (
-                <PostView key={post.id} post={post} author={author} />
-              ))}
-            </Suspense>
-          </div>
+          <Feed />
         </div>
       </main>
     </>
