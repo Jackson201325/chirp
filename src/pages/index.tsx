@@ -2,15 +2,18 @@ import { SignInButton, useUser } from "@clerk/nextjs";
 import { formatDistanceToNow } from "date-fns";
 import Head from "next/head";
 import Image from "next/image";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import type { RouterOutputs } from "~/utils/api";
 import { api } from "~/utils/api";
 import LoadingSpinner from "./api/components/Loading";
 
 const CreatePostWizard = () => {
+  const [input, setInput] = useState("");
   const { user } = useUser();
 
   if (!user) return null;
+
+  const { mutate } = api.post.create.useMutation();
 
   return (
     <div className="flex w-full gap-4">
@@ -25,7 +28,13 @@ const CreatePostWizard = () => {
         type="text"
         placeholder="What's happening?"
         className="grow bg-transparent outline-none"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
       />
+
+      <button type="submit" onClick={() => mutate({ content: input })}>
+        Post
+      </button>
     </div>
   );
 };
@@ -63,7 +72,7 @@ const PostView = (props: PostWithAuthor) => {
 const Feed = () => {
   const { data, isLoading } = api.post.getAll.useQuery();
 
-  if (!data) return <div>Failed to load posts</div>;
+  if (!data && !isLoading) return <div>Failed to load posts</div>;
 
   if (isLoading) {
     return (
@@ -78,7 +87,7 @@ const Feed = () => {
   return (
     <div className="flex flex-col">
       <Suspense fallback={<LoadingSpinner />}>
-        {[...data, ...data]?.map(({ author, post }) => (
+        {data?.map(({ author, post }) => (
           <PostView key={post.id} post={post} author={author} />
         ))}
       </Suspense>
@@ -94,7 +103,7 @@ export default function Home() {
   api.post.getAll.useQuery();
 
   // Return empty div if user is not loaded
-  if (!userLoaded) return <div> Loading User </div>;
+  if (!userLoaded) return <div></div>;
 
   return (
     <>
