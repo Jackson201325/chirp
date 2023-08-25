@@ -2,8 +2,10 @@ import { SignInButton, useUser } from "@clerk/nextjs";
 import { formatDistanceToNow } from "date-fns";
 import Head from "next/head";
 import Image from "next/image";
+import { Suspense } from "react";
 import type { RouterOutputs } from "~/utils/api";
 import { api } from "~/utils/api";
+import LoadingSpinner from "./api/components/Loading";
 
 const CreatePostWizard = () => {
   const { user } = useUser();
@@ -62,7 +64,13 @@ export default function Home() {
   const { data, isLoading } = api.post.getAll.useQuery();
   const { isSignedIn } = useUser();
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (!data) return <div>Failed to load posts</div>;
 
@@ -85,9 +93,11 @@ export default function Home() {
             {isSignedIn && <CreatePostWizard />}
           </div>
           <div className="flex flex-col">
-            {[...data, ...data]?.map(({ author, post }) => (
-              <PostView key={post.id} post={post} author={author} />
-            ))}
+            <Suspense fallback={<LoadingSpinner />}>
+              {[...data, ...data]?.map(({ author, post }) => (
+                <PostView key={post.id} post={post} author={author} />
+              ))}
+            </Suspense>
           </div>
         </div>
       </main>
