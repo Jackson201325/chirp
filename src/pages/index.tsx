@@ -2,7 +2,7 @@ import { SignInButton, useUser } from "@clerk/nextjs";
 import { formatDistanceToNow } from "date-fns";
 import Head from "next/head";
 import Image from "next/image";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useCallback, useEffect, useRef } from "react";
 import type { RouterOutputs } from "~/utils/api";
 import { api } from "~/utils/api";
 import LoadingSpinner from "./api/components/Loading";
@@ -21,16 +21,19 @@ const CreatePostWizard = () => {
       },
     });
 
-  const handlePostCreate = () => {
+  const handlePostCreate = useCallback(() => {
     if (inputRef?.current?.value)
       createPost({ content: inputRef.current.value });
-  };
+  }, [createPost]);
 
-  const handleKeyPress = (e: KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.code === "Enter") {
-      handlePostCreate();
-    }
-  };
+  const handleKeyPress = useCallback(
+    (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.code === "Enter") {
+        handlePostCreate();
+      }
+    },
+    [handlePostCreate]
+  );
 
   useEffect(() => {
     const currentInput = inputRef?.current;
@@ -43,7 +46,7 @@ const CreatePostWizard = () => {
         currentInput.removeEventListener("keydown", handleKeyPress);
       }
     };
-  }, []);
+  }, [handleKeyPress]);
 
   if (!user) return null;
 
