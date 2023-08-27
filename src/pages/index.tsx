@@ -1,13 +1,13 @@
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { formatDistanceToNow } from "date-fns";
-import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import { Suspense, useCallback, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
+import Layout from "~/components/Layout";
+import LoadingSpinner from "~/components/Loading";
 import type { RouterOutputs } from "~/utils/api";
 import { api } from "~/utils/api";
-import LoadingSpinner from "./api/components/Loading";
-import toast from "react-hot-toast";
-import Link from "next/link";
 
 const CreatePostWizard = () => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -110,7 +110,7 @@ const PostView = (props: PostWithAuthor) => {
       <div className="flex flex-shrink flex-col">
         <div className="flex gap-2 font-bold text-slate-300">
           <span>{author.name}</span>
-          <Link href={`/@${author.username}`}>
+          <Link href={`/${author.username}`}>
             <span className="font-thin">@{author.username}</span>
           </Link>
           <span className="font-bold">·</span>
@@ -165,26 +165,17 @@ export default function Home() {
   if (!userLoaded) return <div></div>;
 
   return (
-    <>
-      <Head>
-        <title>Chirp</title>
-        <meta name="description" content="chirp" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <main className="flex h-screen justify-center">
-        <div className="h-full w-full border-x border-slate-400 md:max-w-2xl">
-          <div className="flex border-b border-slate-400 p-4">
-            {!isSignedIn && (
-              <div className="flex justify-center">
-                <SignInButton />
-              </div>
-            )}
-
-            {isSignedIn && <CreatePostWizard />}
+    <Layout>
+      <div className="flex border-b border-slate-400 p-4">
+        {!isSignedIn && (
+          <div className="flex justify-center">
+            <SignInButton />
           </div>
-          <Feed />
-        </div>
-      </main>
-    </>
+        )}
+
+        {isSignedIn && <CreatePostWizard />}
+      </div>
+      <Feed />
+    </Layout>
   );
 }
