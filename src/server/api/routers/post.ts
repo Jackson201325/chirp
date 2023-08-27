@@ -77,7 +77,12 @@ export const postRouter = createTRPCRouter({
 
       const { success } = await ratelimit.limit(authorId);
 
-      if (!success) { throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Too many requests" }); }
+      if (!success) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Too many requests",
+        });
+      }
 
       const post = await ctx.prisma.post.create({
         data: {

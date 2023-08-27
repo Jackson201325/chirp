@@ -6,6 +6,7 @@ import { Suspense, useCallback, useEffect, useRef } from "react";
 import type { RouterOutputs } from "~/utils/api";
 import { api } from "~/utils/api";
 import LoadingSpinner from "./api/components/Loading";
+import toast from "react-hot-toast";
 
 const CreatePostWizard = () => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -18,6 +19,14 @@ const CreatePostWizard = () => {
       onSuccess: () => {
         if (inputRef?.current?.value) inputRef.current.value = "";
         void ctx.post.getAll.invalidate();
+      },
+      onError: (e) => {
+        const errorMessages = e.data?.zodError?.fieldErrors.content;
+        if (errorMessages?.[0]) {
+          toast.error(errorMessages[0]);
+        } else {
+          toast.error("Failed to create post");
+        }
       },
     });
 
@@ -67,9 +76,17 @@ const CreatePostWizard = () => {
         disabled={posting}
       />
 
-      <button type="submit" onClick={handlePostCreate}>
-        Post
-      </button>
+      {posting && (
+        <div className="flex items-center justify-center">
+          <LoadingSpinner size="8" />
+        </div>
+      )}
+
+      {!posting && (
+        <button type="submit" onClick={handlePostCreate}>
+          Post
+        </button>
+      )}
     </div>
   );
 };
@@ -89,7 +106,7 @@ const PostView = (props: PostWithAuthor) => {
         alt="Profile Pic"
       />
 
-      <div className="flex flex-col">
+      <div className="flex flex-shrink flex-col">
         <div className="flex gap-2 font-bold text-slate-300">
           <span>{author.name}</span>
           <span className="font-thin">@{author.username}</span>
@@ -98,7 +115,9 @@ const PostView = (props: PostWithAuthor) => {
             {formatDistanceToNow(new Date(post.createdAt))} ago{" "}
           </span>
         </div>
-        <span className="text-1xl">{post.content}</span>
+        <span className="text-1xl whitespace-normal break-words">
+          {post.content}
+        </span>
       </div>
     </div>
   );
