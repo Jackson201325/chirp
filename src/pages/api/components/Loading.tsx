@@ -5,8 +5,6 @@ type LoadingSpinnerProps = {
 };
 
 const LoadingSpinner = ({ size }: LoadingSpinnerProps) => {
-  console.log(size);
-
   return (
     <div role="status">
       <svg

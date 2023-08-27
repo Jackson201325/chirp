@@ -7,6 +7,7 @@ import type { RouterOutputs } from "~/utils/api";
 import { api } from "~/utils/api";
 import LoadingSpinner from "./api/components/Loading";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 const CreatePostWizard = () => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -109,11 +110,15 @@ const PostView = (props: PostWithAuthor) => {
       <div className="flex flex-shrink flex-col">
         <div className="flex gap-2 font-bold text-slate-300">
           <span>{author.name}</span>
-          <span className="font-thin">@{author.username}</span>
+          <Link href={`/@${author.username}`}>
+            <span className="font-thin">@{author.username}</span>
+          </Link>
           <span className="font-bold">·</span>
-          <span className="font-thin">
-            {formatDistanceToNow(new Date(post.createdAt))} ago{" "}
-          </span>
+          <Link href={`/post/${post.id}`}>
+            <span className="font-thin">
+              {formatDistanceToNow(new Date(post.createdAt))} ago{" "}
+            </span>
+          </Link>
         </div>
         <span className="text-1xl whitespace-normal break-words">
           {post.content}
