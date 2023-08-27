@@ -48,8 +48,6 @@ import { prisma } from "~/server/db";
 export const createTRPCContext = (opts: CreateNextContextOptions) => {
   const { req } = opts;
 
-  // console.log("req", req);
-
   const session = getAuth(req);
 
   const user = session?.userId;
@@ -106,7 +104,6 @@ export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
 const enforceSession = t.middleware(async ({ ctx, next }) => {
-  console.log("ctx", ctx.current_user);
   if (!ctx.current_user)
     throw new TRPCError({
       code: "UNAUTHORIZED",

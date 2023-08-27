@@ -2,18 +2,50 @@ import { SignInButton, useUser } from "@clerk/nextjs";
 import { formatDistanceToNow } from "date-fns";
 import Head from "next/head";
 import Image from "next/image";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import type { RouterOutputs } from "~/utils/api";
 import { api } from "~/utils/api";
 import LoadingSpinner from "./api/components/Loading";
 
 const CreatePostWizard = () => {
-  const [input, setInput] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useUser();
 
-  if (!user) return null;
+  const ctx = api.useContext();
 
-  const { mutate } = api.post.create.useMutation();
+  const { mutate: createPost, isLoading: posting } =
+    api.post.create.useMutation({
+      onSuccess: () => {
+        if (inputRef?.current?.value) inputRef.current.value = "";
+        void ctx.post.getAll.invalidate();
+      },
+    });
+
+  const handlePostCreate = () => {
+    if (inputRef?.current?.value)
+      createPost({ content: inputRef.current.value });
+  };
+
+  const handleKeyPress = (e: KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.code === "Enter") {
+      handlePostCreate();
+    }
+  };
+
+  useEffect(() => {
+    const currentInput = inputRef?.current;
+    if (currentInput) {
+      currentInput.addEventListener("keydown", handleKeyPress);
+    }
+
+    return () => {
+      if (currentInput) {
+        currentInput.removeEventListener("keydown", handleKeyPress);
+      }
+    };
+  }, []);
+
+  if (!user) return null;
 
   return (
     <div className="flex w-full gap-4">
@@ -25,14 +57,14 @@ const CreatePostWizard = () => {
         alt={`"Profile Pic of ${user.fullName}"`}
       />
       <input
+        ref={inputRef}
         type="text"
         placeholder="What's happening?"
         className="grow bg-transparent outline-none"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
+        disabled={posting}
       />
 
-      <button type="submit" onClick={() => mutate({ content: input })}>
+      <button type="submit" onClick={handlePostCreate}>
         Post
       </button>
     </div>
