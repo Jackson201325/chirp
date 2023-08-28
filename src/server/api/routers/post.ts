@@ -9,6 +9,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { filterUserForClient } from "../helpers/filterUser";
+import type { Post } from "@prisma/client";
 
 // Create a new ratelimiter, that allows 3 requests per 1 min seconds
 const ratelimit = new Ratelimit({
@@ -23,6 +24,29 @@ const ratelimit = new Ratelimit({
   prefix: "@upstash/ratelimit",
 });
 
+const returnWithUser = async (posts: Post[]) => {
+  const user = await clerkClient.users.getUserList({
+    userId: posts.map((post) => post.authorId),
+  });
+
+  const filteredUser = user.map(filterUserForClient);
+
+  return posts.map((post) => {
+    const foundAuthor = filteredUser.find((user) => user.id === post.authorId);
+    // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+    if (!foundAuthor || foundAuthor?.username === null)
+      throw new TRPCError({ code: "NOT_FOUND", message: "Author not found" });
+
+    return {
+      post,
+      author: {
+        ...foundAuthor,
+        username: foundAuthor.username,
+      },
+    };
+  });
+};
+
 export const postRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
     const posts = await ctx.prisma.post.findMany({
@@ -31,28 +55,7 @@ export const postRouter = createTRPCRouter({
       },
     });
 
-    const user = await clerkClient.users.getUserList({
-      userId: posts.map((post) => post.authorId),
-    });
-
-    const filteredUser = user.map(filterUserForClient);
-
-    return posts.map((post) => {
-      const foundAuthor = filteredUser.find(
-        (user) => user.id === post.authorId
-      );
-      // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-      if (!foundAuthor || foundAuthor?.username === null)
-        throw new TRPCError({ code: "NOT_FOUND", message: "Author not found" });
-
-      return {
-        post,
-        author: {
-          ...foundAuthor,
-          username: foundAuthor.username,
-        },
-      };
-    });
+    return returnWithUser(posts);
   }),
 
   create: privateProcedure
@@ -82,4 +85,22 @@ export const postRouter = createTRPCRouter({
 
       return post;
     }),
+
+  getPostByUserId: publicProcedure
+    .input(
+      z.object({
+        userId: z.string().min(1).max(280),
+      })
+    )
+    .query(({ ctx, input }) =>
+      ctx.prisma.post
+        .findMany({
+          where: {
+            authorId: input.userId,
+          },
+          take: 100,
+          orderBy: [{ createdAt: "desc" }],
+        })
+        .then(returnWithUser)
+    ),
 });
