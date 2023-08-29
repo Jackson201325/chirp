@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  DATABASE_URL: "https://random.com"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18.x" # Feel free to change the node version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run TypeScript type checking
+        run: npm run typecheck # Make sure you have a script named "typecheck" in your package.json
+
+      - name: Run Eslint
+        run: npm run eslint # Make sure you have a script named "lint" in your package.json
+
+      - name: Run Lint
+        run: npm run lint # Make sure you have a script named "lint" in your package.json
