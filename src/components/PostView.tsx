@@ -21,10 +21,7 @@ const PostView = (props: PostWithAuthor) => {
       <div className="flex flex-shrink flex-col">
         <div className="flex gap-2 font-bold text-slate-300">
           <Link href={`/@${author.username}`}>
-            <span>{author.name}</span>
-          </Link>
-          <Link href={`/@${author.username}`}>
-            <span className="font-thin">@{author.username}</span>
+            <span>@{author.username}</span>
           </Link>
           <span className="font-bold">·</span>
           <Link href={`/post/${post.id}`}>

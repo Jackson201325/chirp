@@ -1,14 +1,11 @@
-import { createServerSideHelpers } from "@trpc/react-query/server";
 import type { GetStaticProps } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import { Suspense } from "react";
-import superjson from "superjson";
 import Layout from "~/components/Layout";
 import LoadingSpinner from "~/components/Loading";
 import PostView from "~/components/PostView";
-import { appRouter } from "~/server/api/root";
-import { prisma } from "~/server/db";
+import ssgHelper from "~/server/api/helpers/ssgHelper";
 import { api } from "~/utils/api";
 
 type ProfilePageFeedProps = {
@@ -66,7 +63,7 @@ const ProfilePage = ({ username }: PageProps) => {
         <div className="relative h-36 justify-center border-slate-400 bg-violet-800 p-4">
           <Image
             src={profileUser.profileImageUrl}
-            className="absolute bottom-0 left-0 -mb-[48px] ml-4 rounded-full border-4 border-black"
+            className="absolute bottom-0 left-0 -mb-[48px] ml-4 rounded-full border-4 border-black bg-black"
             width={96}
             height={96}
             alt={`Profile Pic of ${profileUser.name}`}
@@ -82,11 +79,7 @@ const ProfilePage = ({ username }: PageProps) => {
 };
 
 export const getStaticProps: GetStaticProps = async (context) => {
-  const ssg = createServerSideHelpers({
-    router: appRouter,
-    ctx: { prisma, current_user: null },
-    transformer: superjson,
-  });
+  const ssg = ssgHelper()
 
   const slug = context.params?.profile as string;
 
